@@ -49,6 +49,7 @@ public:
 
   CAEStreamInfo();
   ~CAEStreamInfo();
+  void Reset();
 
   int AddData(uint8_t *data, unsigned int size, uint8_t **buffer = NULL, unsigned int *bufferSize = 0);
 

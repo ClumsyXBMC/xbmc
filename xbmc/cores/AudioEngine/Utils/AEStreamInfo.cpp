@@ -63,18 +63,9 @@ static const uint32_t DTSSampleRates[DTS_SFREQ_COUNT] =
   192000
 };
 
-CAEStreamInfo::CAEStreamInfo() :
-  m_bufferSize(0),
-  m_skipBytes (0),
-  m_coreOnly  (false),
-  m_needBytes (0),
-  m_syncFunc  (&CAEStreamInfo::DetectType),
-  m_hasSync   (false),
-  m_sampleRate(0),
-  m_dtsBlocks (0),
-  m_dataType  (STREAM_TYPE_NULL),
-  m_packFunc  (NULL)
+CAEStreamInfo::CAEStreamInfo()
 {
+  Reset();
   m_dllAvUtil.Load();
   m_dllAvUtil.av_crc_init(m_crcTrueHD, 0, 16, 0x2D, sizeof(m_crcTrueHD));
 }
@@ -82,6 +73,20 @@ CAEStreamInfo::CAEStreamInfo() :
 CAEStreamInfo::~CAEStreamInfo()
 {
   m_dllAvUtil.Unload();
+}
+
+void CAEStreamInfo::Reset()
+{
+  m_bufferSize = 0;
+  m_skipBytes  = 0;
+  m_coreOnly   = false;
+  m_needBytes  = 0;
+  m_syncFunc   = &CAEStreamInfo::DetectType;
+  m_hasSync    = false;
+  m_sampleRate = 0;
+  m_dtsBlocks  = 0;
+  m_dataType   = STREAM_TYPE_NULL;
+  m_packFunc   = NULL;
 }
 
 int CAEStreamInfo::AddData(uint8_t *data, unsigned int size, uint8_t **buffer/* = NULL */, unsigned int *bufferSize/* = 0 */)

@@ -170,7 +170,7 @@ CAEChannelInfo& CAEChannelInfo::operator=(const enum AEStdChLayout rhs)
   return *this;
 }
 
-bool CAEChannelInfo::operator==(const CAEChannelInfo& rhs)
+bool CAEChannelInfo::operator==(const CAEChannelInfo& rhs) const
 {
   /* if the channel count doesnt match, no need to check further */
   if (m_channelCount != rhs.m_channelCount)
@@ -184,7 +184,7 @@ bool CAEChannelInfo::operator==(const CAEChannelInfo& rhs)
   return true;
 }
 
-bool CAEChannelInfo::operator!=(const CAEChannelInfo& rhs)
+bool CAEChannelInfo::operator!=(const CAEChannelInfo& rhs) const
 {
   return !(*this == rhs);
 }

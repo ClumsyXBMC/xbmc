@@ -53,5 +53,10 @@ private:
   CAEBitstreamPacker m_packer;
   uint8_t*           m_buffer;
   unsigned int       m_bufferSize;
+
+  bool m_supportsAC3Out;
+  bool m_supportsDTSOut;
+  bool m_supportsTrueHDOut;
+  bool m_supportsDTSHDOut;
 };
 

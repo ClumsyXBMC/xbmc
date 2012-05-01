@@ -45,35 +45,35 @@ bool CDVDAudioCodecPassthrough::Open(CDVDStreamInfo &hints, CDVDCodecOptions &op
   if (!CAEFactory::AE->SupportsRaw())
     return false;
 
-  bool bSupportsAC3Out    = false;
-  bool bSupportsDTSOut    = false;
-  bool bSupportsTrueHDOut = false;
-  bool bSupportsDTSHDOut  = false;
+  bool m_supportsAC3Out    = false;
+  bool m_supportsDTSOut    = false;
+  bool m_supportsTrueHDOut = false;
+  bool m_supportsDTSHDOut  = false;
 
   int audioMode = g_guiSettings.GetInt("audiooutput.mode");
   if (AUDIO_IS_BITSTREAM(audioMode))
   {
-    bSupportsAC3Out = g_guiSettings.GetBool("audiooutput.ac3passthrough");
-    bSupportsDTSOut = g_guiSettings.GetBool("audiooutput.dtspassthrough");
+    m_supportsAC3Out = g_guiSettings.GetBool("audiooutput.ac3passthrough");
+    m_supportsDTSOut = g_guiSettings.GetBool("audiooutput.dtspassthrough");
   }
 
   if (audioMode == AUDIO_HDMI)
   {
-    bSupportsTrueHDOut = g_guiSettings.GetBool("audiooutput.truehdpassthrough");
-    bSupportsDTSHDOut  = g_guiSettings.GetBool("audiooutput.dtshdpassthrough" ) && bSupportsDTSOut;
+    m_supportsTrueHDOut = g_guiSettings.GetBool("audiooutput.truehdpassthrough");
+    m_supportsDTSHDOut  = g_guiSettings.GetBool("audiooutput.dtshdpassthrough" ) && m_supportsDTSOut;
   }
 
   /* only get the dts core from the parser if we don't support dtsHD */
-  m_info.SetCoreOnly(!bSupportsDTSHDOut);
+  m_info.SetCoreOnly(!m_supportsDTSHDOut);
   m_bufferSize = 0;
 
   if (
-      (hints.codec == CODEC_ID_AC3 && bSupportsAC3Out) ||
-      (hints.codec == CODEC_ID_DTS && bSupportsDTSOut) ||
+      (hints.codec == CODEC_ID_AC3 && m_supportsAC3Out) ||
+      (hints.codec == CODEC_ID_DTS && m_supportsDTSOut) ||
       (audioMode == AUDIO_HDMI &&
         (
-          (hints.codec == CODEC_ID_EAC3   && bSupportsAC3Out   ) ||
-          (hints.codec == CODEC_ID_TRUEHD && bSupportsTrueHDOut)
+          (hints.codec == CODEC_ID_EAC3   && m_supportsAC3Out   ) ||
+          (hints.codec == CODEC_ID_TRUEHD && m_supportsTrueHDOut)
         )
       )
   )
@@ -169,5 +169,11 @@ int CDVDAudioCodecPassthrough::GetData(BYTE** dst)
 
 void CDVDAudioCodecPassthrough::Reset()
 {
+  delete[] m_buffer;
+  m_buffer = NULL;
+  m_bufferSize = 0;
+
+  m_info.Reset();
+  m_info.SetCoreOnly(!m_supportsDTSHDOut);
 }
 

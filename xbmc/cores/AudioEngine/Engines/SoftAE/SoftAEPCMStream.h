@@ -53,7 +53,7 @@ protected:
 
 public:
   virtual unsigned int      GetSpace        ();
-  virtual unsigned int      AddData         (void *data, unsigned int frames);
+  virtual unsigned int      AddData         (void *data, unsigned int size);
   virtual double            GetDelay        ();
   virtual bool              IsBuffering     () { return m_refillBuffer > 0; }
   virtual double            GetCacheTime    ();

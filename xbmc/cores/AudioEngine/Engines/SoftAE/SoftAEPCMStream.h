@@ -20,7 +20,6 @@
  *
  */
 
-#include <samplerate.h>
 #include <list>
 
 #include "threads/SharedSection.h"
@@ -30,6 +29,8 @@
 #include "Utils/AEConvert.h"
 #include "Utils/AERemap.h"
 #include "Utils/AEBuffer.h"
+
+#include "DSP/AEDSPResample.h"
 
 class CSoftAEPCMStream : public ISoftAEStream
 {
@@ -52,7 +53,7 @@ protected:
 
 public:
   virtual unsigned int      GetSpace        ();
-  virtual unsigned int      AddData         (void *data, unsigned int size);
+  virtual unsigned int      AddData         (void *data, unsigned int frames);
   virtual double            GetDelay        ();
   virtual bool              IsBuffering     () { return m_refillBuffer > 0; }
   virtual double            GetCacheTime    ();
@@ -104,9 +105,7 @@ private:
   AEAudioFormat m_format;
 
   bool                    m_forceResample; /* true if we are to force resample even when the rates match */
-  bool                    m_resample;      /* true if the audio needs to be resampled  */
-  double                  m_resampleRatio; /* user specified resample ratio */
-  double                  m_internalRatio; /* internal resample ratio */ 
+  CAEDSPResample         *m_resample;      /* not null if the audio is to be resampled */
   bool                    m_convert;       /* true if the bitspersample needs converting */
   float                  *m_convertBuffer; /* buffer for converted data */
   bool                    m_valid;         /* true if the stream is valid */
@@ -122,11 +121,8 @@ private:
   CAEBuffer           m_inputBuffer;
   unsigned int        m_bytesPerSample;
   unsigned int        m_bytesPerFrame;
-  unsigned int        m_samplesPerFrame;
   CAEChannelInfo      m_aeChannelLayout;
   unsigned int        m_aeBytesPerFrame;
-  SRC_STATE          *m_ssrc;
-  SRC_DATA            m_ssrcData;
   unsigned int        m_framesBuffered;
   std::list<PPacket*> m_outBuffer;
   unsigned int        ProcessFrameBuffer();

@@ -37,8 +37,6 @@ using namespace std;
 
 CSoftAEPCMStream::CSoftAEPCMStream(enum AEDataFormat dataFormat, unsigned int sampleRate, unsigned int encodedSampleRate, CAEChannelInfo channelLayout, unsigned int options) :
   ISoftAEStream::ISoftAEStream(dataFormat, sampleRate, encodedSampleRate, channelLayout, options),
-  m_resampleRatio   (1.0  ),
-  m_internalRatio   (1.0  ),
   m_convertBuffer   (NULL ),
   m_valid           (false),
   m_delete          (false),
@@ -46,7 +44,6 @@ CSoftAEPCMStream::CSoftAEPCMStream(enum AEDataFormat dataFormat, unsigned int sa
   m_rgain           (1.0f ),
   m_refillBuffer    (0    ),
   m_convertFn       (NULL ),
-  m_ssrc            (NULL ),
   m_framesBuffered  (0    ),
   m_newPacket       (NULL ),
   m_packet          (NULL ),
@@ -56,7 +53,7 @@ CSoftAEPCMStream::CSoftAEPCMStream(enum AEDataFormat dataFormat, unsigned int sa
   m_audioCallback   (NULL ),
   m_fadeRunning     (false)
 {
-  m_ssrcData.data_out = NULL;
+  m_resample = NULL;
 
   m_initDataFormat        = dataFormat;
   m_initSampleRate        = sampleRate;
@@ -88,8 +85,7 @@ void CSoftAEPCMStream::InitializeRemap()
   {
     InternalFlush();
     m_aeChannelLayout = AE.GetChannelLayout();
-    m_samplesPerFrame = AE.GetChannelLayout().Count();
-    m_aeBytesPerFrame = m_samplesPerFrame * sizeof(float);
+    m_aeBytesPerFrame = AE.GetChannelLayout().Count() * sizeof(float);
   }
 }
 
@@ -106,8 +102,8 @@ void CSoftAEPCMStream::Initialize()
 
     if (m_resample)
     {
-      _aligned_free(m_ssrcData.data_out);
-      m_ssrcData.data_out = NULL;
+      delete m_resample;
+      m_resample = NULL;
     }
   }
 
@@ -117,14 +113,13 @@ void CSoftAEPCMStream::Initialize()
     m_valid = false;
     return;
   }
-  m_samplesPerFrame = AE.GetChannelLayout().Count();
 
   m_bytesPerSample  = (CAEUtil::DataFormatToBits(useDataFormat) >> 3);
   m_bytesPerFrame   = m_bytesPerSample * m_initChannelLayout.Count();
 
   m_aeChannelLayout = AE.GetChannelLayout();
-  m_aeBytesPerFrame = m_samplesPerFrame * sizeof(float);
-  m_waterLevel      = AE.GetSampleRate() / 2;
+  m_aeBytesPerFrame = AE.GetChannelLayout().Count() * sizeof(float);
+  m_waterLevel      = m_initSampleRate / 2;
   m_refillBuffer    = m_waterLevel;
 
   m_format.m_dataFormat    = useDataFormat;
@@ -150,8 +145,15 @@ void CSoftAEPCMStream::Initialize()
 
   m_inputBuffer.Alloc(m_format.m_frames * m_format.m_frameSize);
 
-  m_resample      = (m_forceResample || m_initSampleRate != AE.GetSampleRate());
-  m_convert       = m_initDataFormat != AE_FMT_FLOAT;
+  if (m_forceResample || m_initSampleRate != AE.GetSampleRate())
+  {
+    CLog::Log(LOGDEBUG, "CSoftAEPCMStream::Initialize - Resampling %u to %u", m_initSampleRate, AE.GetSampleRate());
+    m_resample = new CAEDSPResample();
+    m_resample->Initialize(m_initChannelLayout, m_initSampleRate);
+    m_resample->SetSampleRate(AE.GetSampleRate());
+  }
+
+  m_convert = m_initDataFormat != AE_FMT_FLOAT;
 
   /* if we need to convert, set it up */
   if (m_convert)
@@ -166,19 +168,6 @@ void CSoftAEPCMStream::Initialize()
   }
   else
     m_convertBuffer = (float*)m_inputBuffer.Raw(m_format.m_frames * m_format.m_frameSize);
-
-  /* if we need to resample, set it up */
-  if (m_resample)
-  {
-    int err;
-    m_ssrc                   = src_new(SRC_SINC_MEDIUM_QUALITY, m_initChannelLayout.Count(), &err);
-    m_ssrcData.data_in       = m_convertBuffer;
-    m_internalRatio          = (double)AE.GetSampleRate() / (double)m_initSampleRate;
-    m_ssrcData.src_ratio     = m_internalRatio;
-    m_ssrcData.data_out      = (float*)_aligned_malloc(m_format.m_frameSamples * std::ceil(m_ssrcData.src_ratio) * sizeof(float), 16);
-    m_ssrcData.output_frames = m_format.m_frames * std::ceil(m_ssrcData.src_ratio);
-    m_ssrcData.end_of_input  = 0;
-  }
 
   m_chLayoutCount = m_format.m_channelLayout.Count();
   m_valid = true;
@@ -199,13 +188,7 @@ CSoftAEPCMStream::~CSoftAEPCMStream()
   if (m_convert)
     _aligned_free(m_convertBuffer);
 
-  if (m_resample)
-  {
-    _aligned_free(m_ssrcData.data_out);
-    src_delete(m_ssrc);
-    m_ssrc = NULL;
-  }
-
+  delete m_resample;
   CLog::Log(LOGDEBUG, "CSoftAEPCMStream::~CSoftAEPCMStream - Destructed");
 }
 
@@ -217,7 +200,8 @@ unsigned int CSoftAEPCMStream::GetSpace()
   if (m_framesBuffered >= m_waterLevel)
     return 0;
 
-  return ((m_waterLevel - m_framesBuffered) * m_bytesPerFrame) + m_inputBuffer.Free();
+  /* NOTE: dont count (m_waterLevel - m_framesBuffered) as we cant know if DSPs will alter the frame count (resampler) */
+  return m_inputBuffer.Free();
 }
 
 unsigned int CSoftAEPCMStream::AddData(void *data, unsigned int size)
@@ -282,16 +266,13 @@ unsigned int CSoftAEPCMStream::ProcessFrameBuffer()
   /* resample it if we need to */
   if (m_resample)
   {
-    m_ssrcData.input_frames = samples / m_chLayoutCount;
-    if (src_process(m_ssrc, &m_ssrcData) != 0)
-      return 0;
-    data     = (uint8_t*)m_ssrcData.data_out;
-    frames   = m_ssrcData.output_frames_gen;
-    consumed = m_ssrcData.input_frames_used * m_bytesPerFrame;
-    if (!frames)
+    consumed = m_resample->Process((float*)data, samples) * m_bytesPerSample;
+    data = (uint8_t*)m_resample->GetOutput(samples);
+    m_resample->GetOutput(samples);
+    if (!samples)
       return consumed;
 
-    samples = frames * m_chLayoutCount;
+    frames = samples / m_chLayoutCount;
   }
   else
   {
@@ -320,14 +301,14 @@ unsigned int CSoftAEPCMStream::ProcessFrameBuffer()
     remaining -= copy;
 
     /* wait till we have a full packet, or no more data before processing the packet */
-    if ((!m_draining || remaining) && m_newPacket->data.Free() > 0)
+    if (!m_draining && m_newPacket->data.Free() > 0)
       continue;
 
     /* make a new packet for downmix/remap */
     PPacket *pkt = new PPacket();
 
     /* downmix/remap the data */
-    size_t frames = m_newPacket->data.Used() / m_format.m_channelLayout.Count() / sizeof(float);
+    size_t frames = m_newPacket->data.Used() / m_chLayoutCount / sizeof(float);
     size_t used   = frames * m_aeChannelLayout.Count() * sizeof(float);
     pkt->data.Alloc(used);
     m_remap.Remap(
@@ -440,6 +421,9 @@ double CSoftAEPCMStream::GetDelay()
   delay += (double)(m_inputBuffer.Used() / m_format.m_frameSize) / (double)m_format.m_sampleRate;
   delay += (double)m_framesBuffered                              / (double)AE.GetSampleRate();
 
+  if (m_resample)
+    delay += m_resample->GetDelay();
+
   return delay;
 }
 
@@ -508,13 +492,6 @@ void CSoftAEPCMStream::Flush()
 
 void CSoftAEPCMStream::InternalFlush()
 {
-  /* reset the resampler */
-  if (m_resample)
-  {
-    m_ssrcData.end_of_input = 0;
-    src_reset(m_ssrc);
-  }
-
   /* invalidate any incoming samples */
   m_newPacket->data.Empty();
 
@@ -544,7 +521,7 @@ double CSoftAEPCMStream::GetResampleRatio()
     return 1.0f;
 
   CSharedLock lock(m_lock);
-  return m_ssrcData.src_ratio;
+  return m_resample->GetRatio();
 }
 
 bool CSoftAEPCMStream::SetResampleRatio(double ratio)
@@ -553,21 +530,7 @@ bool CSoftAEPCMStream::SetResampleRatio(double ratio)
     return false;
 
   CSharedLock lock(m_lock);
-
-  int oldRatioInt = std::ceil(m_ssrcData.src_ratio);
-
-  m_resampleRatio = ratio;
-
-  src_set_ratio(m_ssrc, m_resampleRatio * m_internalRatio);
-  m_ssrcData.src_ratio = m_resampleRatio * m_internalRatio;
-
-  //Check the resample buffer size and resize if necessary.
-  if (oldRatioInt < std::ceil(m_ssrcData.src_ratio))
-  {
-    _aligned_free(m_ssrcData.data_out);
-    m_ssrcData.data_out      = (float*)_aligned_malloc(m_format.m_frameSamples * std::ceil(m_ssrcData.src_ratio) * sizeof(float), 16);
-    m_ssrcData.output_frames = m_format.m_frames * std::ceil(m_ssrcData.src_ratio);
-  }
+  m_resample->SetRatio(ratio);
   return true;
 }
 

@@ -29,6 +29,8 @@ SRCS = \
 	Utils/AEELDParser.cpp \
 	Utils/AEDeviceInfo.cpp \
 	\
+	DSP/AEDSPResample.cpp \
+	\
 	Engines/SoftAE/SoftAE.cpp \
 	Engines/SoftAE/SoftAEPCMStream.cpp \
 	Engines/SoftAE/SoftAERAWStream.cpp \

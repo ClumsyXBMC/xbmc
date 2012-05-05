@@ -126,7 +126,7 @@ void CSoftAEPCMStream::Initialize()
   m_format.m_sampleRate    = m_initSampleRate;
   m_format.m_encodedRate   = m_initEncodedSampleRate;
   m_format.m_channelLayout = m_initChannelLayout;
-  m_format.m_frames        = m_initSampleRate / 8;
+  m_format.m_frames        = m_initSampleRate / 4;
   m_format.m_frameSamples  = m_format.m_frames * m_initChannelLayout.Count();
   m_format.m_frameSize     = m_bytesPerFrame;
 
@@ -192,7 +192,8 @@ CSoftAEPCMStream::~CSoftAEPCMStream()
   CLog::Log(LOGDEBUG, "CSoftAEPCMStream::~CSoftAEPCMStream - Destructed");
 }
 
-unsigned int CSoftAEPCMStream::GetSpace()
+/* inlined as AddData uses it */
+inline unsigned int CSoftAEPCMStream::GetSpace()
 {
   if (!m_valid || m_draining)
     return 0;
@@ -200,8 +201,7 @@ unsigned int CSoftAEPCMStream::GetSpace()
   if (m_framesBuffered >= m_waterLevel)
     return 0;
 
-  /* NOTE: dont count (m_waterLevel - m_framesBuffered) as we cant know if DSPs will alter the frame count (resampler) */
-  return m_inputBuffer.Free();
+  return m_inputBuffer.Free() + (std::max(0U, (m_waterLevel - m_framesBuffered)) * m_format.m_frameSize);
 }
 
 unsigned int CSoftAEPCMStream::AddData(void *data, unsigned int size)
@@ -220,20 +220,31 @@ unsigned int CSoftAEPCMStream::AddData(void *data, unsigned int size)
       return 0;
   }
 
-  if (m_framesBuffered >= m_waterLevel)
+  /* dont ever take more then GetSpace advertises */
+  size = std::min(size, GetSpace());
+  if (size == 0)
     return 0;
 
-  size_t copy = std::min(m_inputBuffer.Free(), (size_t)size);
-  if (copy > 0)
-    m_inputBuffer.Push(data, copy);
-
-  if (m_inputBuffer.Free() == 0)
+  unsigned int taken = 0;
+  while(size)
   {
-    unsigned int consumed = ProcessFrameBuffer();
-    m_inputBuffer.Shift(NULL, consumed);
+    unsigned int copy = std::min((unsigned int)m_inputBuffer.Free(), size);
+    if (copy > 0)
+    {
+      m_inputBuffer.Push(data, copy);
+      size  -= copy;
+      taken += copy;
+      data   = (uint8_t*)data + copy;
+    }
+
+    if (m_inputBuffer.Free() == 0)
+    {
+      unsigned int consumed = ProcessFrameBuffer();
+      m_inputBuffer.Shift(NULL, consumed);
+    }
   }
 
-  return copy;
+  return taken;
 }
 
 unsigned int CSoftAEPCMStream::ProcessFrameBuffer()

@@ -116,7 +116,7 @@ CSoftAERAWStream::~CSoftAERAWStream()
   CLog::Log(LOGDEBUG, "CSoftAERAWStream::~CSoftAERAWStream - Destructed");
 }
 
-unsigned int CSoftAERAWStream::GetSpace()
+inline unsigned int CSoftAERAWStream::GetSpace()
 {
   if (!m_valid || m_draining)
     return 0;
@@ -142,16 +142,22 @@ unsigned int CSoftAERAWStream::AddData(void *data, unsigned int size)
       return 0;
   }
 
-  if (m_framesBuffered >= m_waterLevel)
+  /* honour the size reported by GetSpace() */
+  size = std::min(size, GetSpace());
+  if (size == 0)
     return 0;
 
   unsigned int used = 0;
   while(size > 0)
   {
     size_t copy = std::min(m_inputBuffer->Free(), (size_t)size);
-    m_inputBuffer->Push(data, copy);
-    used += copy;
-    size -= copy;
+    if (copy > 0)
+    {
+      m_inputBuffer->Push(data, copy);
+      used += copy;
+      size -= copy;
+      data  = (uint8_t*)data + copy;
+    }
 
     if (m_inputBuffer->Free() == 0)
     {

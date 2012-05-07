@@ -36,7 +36,7 @@
 using namespace std;
 
 CSoftAEPCMStream::CSoftAEPCMStream(enum AEDataFormat dataFormat, unsigned int sampleRate, unsigned int encodedSampleRate, CAEChannelInfo channelLayout, unsigned int options) :
-  ISoftAEStream::ISoftAEStream(dataFormat, sampleRate, encodedSampleRate, channelLayout, options),
+  ISoftAEStream(dataFormat, sampleRate, encodedSampleRate, channelLayout, options),
   m_convertBuffer   (NULL ),
   m_valid           (false),
   m_delete          (false),
@@ -584,4 +584,3 @@ void CSoftAEPCMStream::RegisterSlave(IAEStream *slave)
   m_slave = s;
   s->m_parent = this;
 }
-

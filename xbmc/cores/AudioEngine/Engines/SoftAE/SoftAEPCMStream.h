@@ -26,28 +26,29 @@
 #include "threads/SharedSection.h"
 
 #include "AEAudioFormat.h"
-#include "Interfaces/AEStream.h"
+#include "ISoftAEStream.h"
 #include "Utils/AEConvert.h"
 #include "Utils/AERemap.h"
 #include "Utils/AEBuffer.h"
 
-class IAEPostProc;
-class CSoftAEStream : public IAEStream
+class CSoftAEPCMStream : public ISoftAEStream
 {
 protected:
   friend class CSoftAE;
-  CSoftAEStream(enum AEDataFormat format, unsigned int sampleRate, unsigned int encodedSamplerate, CAEChannelInfo channelLayout, unsigned int options);
-  virtual ~CSoftAEStream();
+  CSoftAEPCMStream(enum AEDataFormat format, unsigned int sampleRate, unsigned int encodedSamplerate, CAEChannelInfo channelLayout, unsigned int options);
+  virtual ~CSoftAEPCMStream();
 
-  void Initialize();
-  void InitializeRemap();
-  void Destroy();
-  uint8_t* GetFrame();
+  virtual void Initialize();
+  virtual void InitializeRemap();
+  virtual void Destroy();
+  virtual uint8_t* GetFrame();
 
-  bool IsPaused   () { return m_paused; }
-  bool IsDestroyed() { return m_delete; }
-  bool IsValid    () { return m_valid;  }
-  const bool IsRaw() const { return AE_IS_RAW(m_initDataFormat); }  
+  virtual bool IsPaused   () { return m_paused; }
+  virtual void SetPaused  (const bool paused) { m_paused = paused; }
+  virtual bool IsDestroyed() { return m_delete; }
+  virtual bool IsValid    () { return m_valid;  }
+  virtual const bool IsRaw() const { return false; } 
+  virtual const CAEChannelInfo& GetChannelLayout() const { return m_initChannelLayout; }
 
 public:
   virtual unsigned int      GetSpace        ();
@@ -67,7 +68,7 @@ public:
   virtual float             GetVolume       ()             { return m_volume; }
   virtual float             GetReplayGain   ()             { return m_rgain ; }
   virtual void              SetVolume       (float volume) { m_volume = std::max( 0.0f, std::min(1.0f, volume)); }
-  virtual void              SetReplayGain   (float factor) { m_rgain  = std::max( 0.0f, factor); }
+  virtual void              SetReplayGain   (float factor) { m_rgain  = std::max(-1.0f, std::max(1.0f, factor)); }
 
   virtual const unsigned int      GetFrameSize   () const  { return m_format.m_frameSize; }
   virtual const unsigned int      GetChannelCount() const  { return m_initChannelLayout.Count(); }
@@ -149,8 +150,5 @@ private:
   float              m_fadeStep;
   float              m_fadeTarget;
   unsigned int       m_fadeTime;
-
-  /* slave stream */
-  CSoftAEStream     *m_slave;
 };
 

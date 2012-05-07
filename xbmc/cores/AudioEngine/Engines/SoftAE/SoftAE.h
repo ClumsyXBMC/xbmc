@@ -38,6 +38,9 @@
 #include "AEAudioFormat.h"
 #include "AESinkFactory.h"
 
+#include "Interfaces/AEDSP.h"
+#include "DSP/AEDSPHeadphonesHRTF.h"
+
 #include "ISoftAEStream.h"
 #include "SoftAESound.h"
 
@@ -161,6 +164,9 @@ private:
   unsigned int              m_bytesPerSample;
   CAEConvert::AEConvertFrFn m_convertFn;
 
+  CCriticalSection m_dspLock;
+  AEDSPList        m_dspList;
+
   /* currently playing sounds */
   typedef struct {
     CSoftAESound *owner;
@@ -194,6 +200,7 @@ private:
 
   /* thread run stages */
   void         MixSounds        (float *buffer, unsigned int samples);
+  void*        RunDSPStage      (float *data  , unsigned int samples);
   void         FinalizeSamples  (float *buffer, unsigned int samples);
 
   ISoftAEStream *m_masterStream;

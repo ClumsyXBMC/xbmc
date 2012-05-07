@@ -75,5 +75,13 @@ public:
    * @return The delay in seconds that the DSP intoduces to the stream
    */
   virtual double GetDelay() = 0;
+
+  /**
+   * Called by IAE when a setting change occurs
+   * @note This method is called in a thread safe manner, it is safe to re-initialize if required
+   * @param The name of the setting that changed
+   */
+  virtual void OnSettingChange(std::string setting) {};
+
 };
 

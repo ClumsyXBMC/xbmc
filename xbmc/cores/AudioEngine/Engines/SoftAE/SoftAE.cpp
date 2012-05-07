@@ -40,6 +40,7 @@
 #include "Interfaces/AESink.h"
 #include "Utils/AEUtil.h"
 #include "Encoders/AEEncoderFFmpeg.h"
+#include "DSP/AEDSPHeadphonesHRTF.h"
 
 using namespace std;
 
@@ -325,6 +326,28 @@ void CSoftAE::InternalOpenSink()
 
     /* invalidate the buffer */
     m_buffer.Empty();
+
+    /* take the DSP lock */
+    CSingleLock dspLock(m_dspLock);
+
+    /* remove and free any DSPs */
+    while(!m_dspList.empty())
+    {
+      IAEDSP *dsp = m_dspList.back();
+      m_dspList.pop_back();
+      delete dsp;
+    }
+
+    if (!m_rawPassthrough)
+    {
+      /* install the HeadphonesHRTF DSP */
+      IAEDSP *dsp;
+      dsp = new CAEDSPHeadphonesHRTF();
+      if (dsp->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate))
+        m_dspList.push_back(dsp);
+      else
+        delete dsp;
+    }
   }
   else
     CLog::Log(LOGINFO, "CSoftAE::InternalOpenSink - keeping old sink with : %s, %s, %dhz",
@@ -489,6 +512,14 @@ void CSoftAE::OnSettingsChange(std::string setting)
     for (StreamList::iterator itt = m_streams.begin(); itt != m_streams.end(); ++itt)
       (*itt)->InitializeRemap();
   }
+
+  /* tell the DSPs about the change */
+  CSingleLock dspLock(m_dspLock);
+  for(AEDSPList::iterator itt = m_dspList.begin(); itt != m_dspList.end(); ++itt)
+  {
+    IAEDSP *dsp = *itt;
+    dsp->OnSettingChange(setting);
+  }
 }
 
 void CSoftAE::LoadSettings()
@@ -588,6 +619,14 @@ void CSoftAE::Deinitialize()
   _aligned_free(m_converted);
   m_converted = NULL;
   m_convertedSize = 0;
+
+  /* remove and free any DSPs */
+  while(!m_dspList.empty())
+  {
+    IAEDSP *dsp = m_dspList.back();
+    m_dspList.pop_back();
+    delete dsp;
+  }
 }
 
 void CSoftAE::EnumerateOutputDevices(AEDeviceList &devices, bool passthrough)
@@ -932,6 +971,25 @@ void CSoftAE::MixSounds(float *buffer, unsigned int samples)
   }
 }
 
+inline void* CSoftAE::RunDSPStage(float *data, unsigned int samples)
+{
+  /* Final output DSPs MUST have a 1:1 sample ratio */
+  CSingleLock dspLock(m_dspLock);
+  for(AEDSPList::iterator itt = m_dspList.begin(); itt != m_dspList.end(); ++itt)
+  {
+    IAEDSP *dsp = *itt;
+    unsigned int count;
+
+    count = dsp->Process((float*)data, samples);
+    assert(count == samples);
+
+    data = dsp->GetOutput(count);
+    assert(count == samples);
+  }
+
+  return data;
+}
+
 void CSoftAE::FinalizeSamples(float *buffer, unsigned int samples)
 {
   if (m_soundMode != AE_SOUND_OFF)
@@ -990,6 +1048,7 @@ void CSoftAE::RunOutputStage()
     return;
 
   void *data = m_buffer.Raw(needBytes);
+  data = RunDSPStage((float*)data, needSamples);
   FinalizeSamples((float*)data, needSamples);
 
   int wroteFrames;
@@ -1045,7 +1104,9 @@ void CSoftAE::RunTranscodeStage()
 
   if (m_buffer.Used() >= block && m_encodedBuffer.Used() < sinkBlock * 2)
   {
-    FinalizeSamples((float*)m_buffer.Raw(block), m_encoderFormat.m_frameSamples);
+    void *data = (float*)m_buffer.Raw(block);
+    data = RunDSPStage((float*)data, m_encoderFormat.m_frameSamples);
+    FinalizeSamples((float*)data, m_encoderFormat.m_frameSamples);
 
     void *buffer;
     if (m_convertFn)
@@ -1058,16 +1119,16 @@ void CSoftAE::RunTranscodeStage()
         m_convertedSize = newsize;
       }
       m_convertFn(
-        (float*)m_buffer.Raw(block),
+        (float*)data,
         m_encoderFormat.m_frames * m_encoderFormat.m_channelLayout.Count(),
         m_converted
       );
       buffer = m_converted;
     }
     else
-      buffer = m_buffer.Raw(block);
+      buffer = data;
 
-    int encodedFrames  = m_encoder->Encode((float*)buffer, m_encoderFormat.m_frames);
+    int encodedFrames = m_encoder->Encode((float*)buffer, m_encoderFormat.m_frames);
     m_buffer.Shift(NULL, encodedFrames * m_encoderFormat.m_frameSize);
 
     uint8_t *packet;

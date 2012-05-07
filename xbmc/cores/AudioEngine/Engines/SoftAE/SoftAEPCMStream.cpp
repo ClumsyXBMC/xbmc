@@ -107,14 +107,13 @@ void CSoftAEPCMStream::Initialize()
     }
   }
 
-  enum AEDataFormat useDataFormat = m_initDataFormat;
   if (!m_initChannelLayout.Count())
   {
     m_valid = false;
     return;
   }
 
-  m_bytesPerSample  = (CAEUtil::DataFormatToBits(useDataFormat) >> 3);
+  m_bytesPerSample  = (CAEUtil::DataFormatToBits(m_initDataFormat) >> 3);
   m_bytesPerFrame   = m_bytesPerSample * m_initChannelLayout.Count();
 
   m_aeChannelLayout = AE.GetChannelLayout();
@@ -122,11 +121,11 @@ void CSoftAEPCMStream::Initialize()
   m_waterLevel      = m_initSampleRate / 2;
   m_refillBuffer    = m_waterLevel;
 
-  m_format.m_dataFormat    = useDataFormat;
+  m_format.m_dataFormat    = m_initDataFormat;
   m_format.m_sampleRate    = m_initSampleRate;
   m_format.m_encodedRate   = m_initEncodedSampleRate;
   m_format.m_channelLayout = m_initChannelLayout;
-  m_format.m_frames        = m_initSampleRate / 4;
+  m_format.m_frames        = m_initSampleRate / 8;
   m_format.m_frameSamples  = m_format.m_frames * m_initChannelLayout.Count();
   m_format.m_frameSize     = m_bytesPerFrame;
 

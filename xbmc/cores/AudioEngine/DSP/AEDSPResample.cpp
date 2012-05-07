@@ -76,7 +76,7 @@ void CAEDSPResample::SetSampleRate(const unsigned int sampleRate)
 void CAEDSPResample::SetRatio(const double ratio)
 {
   m_ssrcData.src_ratio = ratio;
-  m_outputRate = std::ceil(ratio * m_sampleRate);
+  m_outputRate = (unsigned int)std::ceil(ratio * m_sampleRate);
 }
 
 double CAEDSPResample::GetRatio()
@@ -92,7 +92,7 @@ void CAEDSPResample::GetOutputFormat(CAEChannelInfo& channels, unsigned int& sam
 
 unsigned int CAEDSPResample::Process(float *data, unsigned int samples)
 {
-  unsigned int needSamples = samples * std::ceil(m_ssrcData.src_ratio);
+  unsigned int needSamples = samples * (unsigned int)std::ceil(m_ssrcData.src_ratio);
   if (m_ssrcDataSamples < needSamples)
   {
     if (m_ssrcData.data_out)

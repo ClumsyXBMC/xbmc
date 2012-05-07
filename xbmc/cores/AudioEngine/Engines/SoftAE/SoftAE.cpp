@@ -40,6 +40,7 @@
 #include "Interfaces/AESink.h"
 #include "Utils/AEUtil.h"
 #include "Encoders/AEEncoderFFmpeg.h"
+#include "DSP/AEDSPHeadphonesHRTF.h"
 
 using namespace std;
 
@@ -331,6 +332,9 @@ void CSoftAE::InternalOpenSink()
 
   reInit = (reInit || m_chLayout != m_sinkFormat.m_channelLayout);
   m_chLayout = m_sinkFormat.m_channelLayout;
+
+  m_DSP = new CAEDSPHeadphonesHRTF;
+  m_DSP->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate);
 
   size_t neededBufferSize = 0;
   if (m_rawPassthrough)
@@ -973,6 +977,11 @@ void CSoftAE::RunOutputStage()
 
   void *data = m_buffer.Raw(needBytes);
   FinalizeSamples((float*)data, needSamples);
+
+  if(m_sinkFormat.m_channelLayout.Count() == 2 && g_guiSettings.GetBool("audiooutput.guisoundwhileplayback"))
+  {
+    unsigned int m = m_DSP->Process((float*)data, (unsigned int)needSamples);
+  }
 
   int wroteFrames;
   if (m_convertFn)

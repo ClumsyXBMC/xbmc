@@ -37,6 +37,7 @@
 #include "Utils/AEBuffer.h"
 #include "AEAudioFormat.h"
 #include "AESinkFactory.h"
+#include "DSP/AEDSPHeadphonesHRTF.h"
 
 #include "ISoftAEStream.h"
 #include "SoftAESound.h"
@@ -159,6 +160,8 @@ private:
   float                     m_encoderFrameSizeMul;
   unsigned int              m_bytesPerSample;
   CAEConvert::AEConvertFrFn m_convertFn;
+
+  CAEDSPHeadphonesHRTF     *m_DSP;
 
   /* currently playing sounds */
   typedef struct {

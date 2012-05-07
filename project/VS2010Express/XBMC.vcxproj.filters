@@ -277,6 +277,12 @@
     <Filter Include="cores\AudioEngine\Utils">
       <UniqueIdentifier>{775154f3-9284-488f-8f2f-26597f264d0e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cores\AudioEngine\Engines\SoftAE">
+      <UniqueIdentifier>{45af7e2d-2055-4635-9957-9490e4f9592c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cores\AudioEngine\DSP">
+      <UniqueIdentifier>{1f0928e0-88ea-42ab-a5ff-44947b0b9605}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\xbmc\win32\pch.cpp">
@@ -2636,15 +2642,6 @@
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.cpp">
       <Filter>cores\AudioEngine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE.cpp">
-      <Filter>cores\AudioEngine\Engines</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAESound.cpp">
-      <Filter>cores\AudioEngine\Engines</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAEStream.cpp">
-      <Filter>cores\AudioEngine\Engines</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\PostProc\AEPPAnimationFade.cpp">
       <Filter>cores\AudioEngine\PostProc</Filter>
     </ClCompile>
@@ -2693,6 +2690,21 @@
     <ClCompile Include="..\..\xbmc\windowing\windows\WinSystemWin32GL.cpp" />
     <ClCompile Include="..\..\xbmc\cores\dvdplayer\DVDCodecs\Audio\DVDAudioCodecPassthrough.cpp">
       <Filter>cores\dvdplayer\DVDCodecs\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAE.cpp">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAEPCMStream.cpp">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAERAWStream.cpp">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAESound.cpp">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.cpp">
+      <Filter>cores\AudioEngine\DSP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -5345,15 +5357,6 @@
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.h">
       <Filter>cores\AudioEngine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE.h">
-      <Filter>cores\AudioEngine\Engines</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAESound.h">
-      <Filter>cores\AudioEngine\Engines</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAEStream.h">
-      <Filter>cores\AudioEngine\Engines</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AE.h">
       <Filter>cores\AudioEngine\Interfaces</Filter>
     </ClInclude>
@@ -5422,6 +5425,24 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\cores\dvdplayer\DVDCodecs\Audio\DVDAudioCodecPassthrough.h">
       <Filter>cores\dvdplayer\DVDCodecs\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAERAWStream.h">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAE.h">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAEPCMStream.h">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\audioengine\engines\softae\isoftaestream.h">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAESound.h">
+      <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.h">
+      <Filter>cores\AudioEngine\DSP</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

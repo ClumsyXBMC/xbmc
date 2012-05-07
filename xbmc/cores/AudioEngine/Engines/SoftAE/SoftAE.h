@@ -38,14 +38,14 @@
 #include "AEAudioFormat.h"
 #include "AESinkFactory.h"
 
-#include "SoftAEStream.h"
+#include "ISoftAEStream.h"
 #include "SoftAESound.h"
 
 #include "cores/IAudioCallback.h"
 
 /* forward declarations */
 class IThreadedAE;
-class CSoftAEStream;
+class ISoftAEStream;
 class CSoftAESound;
 class IAESink;
 
@@ -106,13 +106,13 @@ public:
   virtual bool SupportsRaw();
 
   /* internal stream methods */
-  void PauseStream (CSoftAEStream *stream);
-  void ResumeStream(CSoftAEStream *stream);
+  void PauseStream (ISoftAEStream *stream);
+  void ResumeStream(ISoftAEStream *stream);
 
 private:
   CThread *m_thread;
 
-  CSoftAEStream *GetMasterStream();
+  ISoftAEStream *GetMasterStream();
 
   void LoadSettings();
   void VerifySoundDevice(std::string &device, bool passthrough);
@@ -167,7 +167,7 @@ private:
     unsigned int  sampleCount;
   } SoundState;
 
-  typedef std::vector<CSoftAEStream*> StreamList;
+  typedef std::vector<ISoftAEStream*> StreamList;
   typedef std::list  <CSoftAESound* > SoundList;
   typedef std::list  <SoundState    > SoundStateList;  
     
@@ -193,7 +193,7 @@ private:
   void         MixSounds        (float *buffer, unsigned int samples);
   void         FinalizeSamples  (float *buffer, unsigned int samples);
 
-  CSoftAEStream *m_masterStream;
+  ISoftAEStream *m_masterStream;
 
   void         (CSoftAE::*m_outputStageFn)();
   void         RunOutputStage   ();
@@ -207,6 +207,6 @@ private:
   void         ResumeSlaveStreams(const StreamList &streams);
   void         RunNormalizeStage (unsigned int channelCount, void *out, unsigned int mixed);
 
-  void         RemoveStream(StreamList &streams, CSoftAEStream *stream);
+  void         RemoveStream(StreamList &streams, ISoftAEStream *stream);
 };
 

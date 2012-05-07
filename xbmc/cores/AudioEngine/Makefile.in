@@ -29,14 +29,14 @@ SRCS = \
 	Utils/AEELDParser.cpp \
 	Utils/AEDeviceInfo.cpp \
 	\
-	PostProc/AEPPAnimationFade.cpp \
+	Engines/SoftAE/SoftAE.cpp \
+	Engines/SoftAE/SoftAEPCMStream.cpp \
+	Engines/SoftAE/SoftAERAWStream.cpp \
+	Engines/SoftAE/SoftAESound.cpp \
 	\
-	Engines/SoftAE.cpp \
-	Engines/SoftAEStream.cpp \
-	Engines/SoftAESound.cpp \
-	Engines/PulseAE.cpp \
-	Engines/PulseAEStream.cpp \
-	Engines/PulseAESound.cpp \
+	Engines/PulseAE/PulseAE.cpp \
+	Engines/PulseAE/PulseAEStream.cpp \
+	Engines/PulseAE/PulseAESound.cpp \
 	\
 	Encoders/AEEncoderFFmpeg.cpp
 

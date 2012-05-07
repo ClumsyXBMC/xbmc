@@ -25,11 +25,11 @@
 #if defined(TARGET_DARWIN)
   #include "Engines/CoreAudioAE.h"
 #else
-  #include "Engines/SoftAE.h"
+  #include "Engines/SoftAE/SoftAE.h"
 #endif
 
 #if defined(HAS_PULSEAUDIO)
-  #include "Engines/PulseAE.h"
+  #include "Engines/PulseAE/PulseAE.h"
 #endif
 
 IAE* CAEFactory::AE = NULL;

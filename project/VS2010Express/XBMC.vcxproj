@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug (DirectX)|Win32">
@@ -299,10 +299,13 @@
     <ClCompile Include="..\..\xbmc\BackgroundInfoLoader.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AEFactory.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Encoders\AEEncoderFFmpeg.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAE.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAEPCMStream.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAERAWStream.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAESound.cpp" />
-    <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAEStream.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\PostProc\AEPPAnimationFade.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Sinks\AESinkDirectSound.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Sinks\AESinkNULL.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Sinks\AESinkProfiler.cpp" />
@@ -899,10 +902,13 @@
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AEAudioFormat.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AEFactory.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Encoders\AEEncoderFFmpeg.h" />
+    <ClInclude Include="..\..\xbmc\cores\audioengine\engines\softae\isoftaestream.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAE.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAEPCMStream.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAERAWStream.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAESound.h" />
-    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAEStream.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AE.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AEEncoder.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AESink.h" />

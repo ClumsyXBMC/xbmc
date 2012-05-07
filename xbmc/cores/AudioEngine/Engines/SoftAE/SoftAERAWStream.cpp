@@ -36,7 +36,7 @@
 using namespace std;
 
 CSoftAERAWStream::CSoftAERAWStream(enum AEDataFormat dataFormat, unsigned int sampleRate, unsigned int encodedSampleRate, CAEChannelInfo channelLayout, unsigned int options) :
-  ISoftAEStream::ISoftAEStream(dataFormat, sampleRate, encodedSampleRate, channelLayout, options),
+  ISoftAEStream(dataFormat, sampleRate, encodedSampleRate, channelLayout, options),
   m_valid           (false),
   m_delete          (false),
   m_refillBuffer    (0    ),

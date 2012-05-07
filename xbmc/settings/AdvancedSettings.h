@@ -89,6 +89,8 @@ class CAdvancedSettings
     static void GetCustomRegexpReplacers(TiXmlElement *pRootElement, CStdStringArray& settings);
     static void GetCustomExtensions(TiXmlElement *pRootElement, CStdString& extensions);
 
+    /* AE & Audio Settings */
+    /*---------------------*/
     int m_audioHeadRoom;
     float m_ac3Gain;
     CStdString m_audioDefaultPlayer;
@@ -102,6 +104,14 @@ class CAdvancedSettings
     CStdString m_audioTranscodeTo;
     float m_limiterHold;
     float m_limiterRelease;
+
+    /* DSP Settings        */
+    /*---------------------*/
+    /* DSP: HeadphonesHRTF */
+    CStdString  dspHRTFModel;
+    int         dspHRTFCutFreq;
+    double      dspHRTFFeedLvl;
+    double      dspHRTFGain;
 
     float m_videoSubsDelayRange;
     float m_videoAudioDelayRange;

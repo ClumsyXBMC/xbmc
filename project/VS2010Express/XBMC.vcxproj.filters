@@ -2706,6 +2706,9 @@
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.cpp">
       <Filter>cores\AudioEngine\DSP</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.cpp">
+      <Filter>cores\AudioEngine\DSP</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5442,6 +5445,9 @@
       <Filter>cores\AudioEngine\Engines\SoftAE</Filter>
     </ClInclude>
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.h">
+      <Filter>cores\AudioEngine\DSP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.h">
       <Filter>cores\AudioEngine\DSP</Filter>
     </ClInclude>
   </ItemGroup>

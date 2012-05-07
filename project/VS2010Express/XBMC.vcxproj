@@ -303,6 +303,7 @@
     <ClCompile Include="..\..\xbmc\BackgroundInfoLoader.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AEFactory.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Encoders\AEEncoderFFmpeg.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\Engines\SoftAE\SoftAE.cpp" />
@@ -905,6 +906,7 @@
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AEAudioFormat.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AEFactory.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Encoders\AEEncoderFFmpeg.h" />
     <ClInclude Include="..\..\xbmc\cores\audioengine\engines\softae\isoftaestream.h" />

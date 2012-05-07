@@ -55,6 +55,13 @@ void CAdvancedSettings::Initialize()
   m_allChannelStereo = false;
   m_audioSinkBufferDurationMsec = 50;
 
+  /* DSP Settings */
+  /* DSP: HeadphonesHRTF */
+  dspHRTFCutFreq = 0;
+  dspHRTFFeedLvl = 0.0;
+  dspHRTFGain    = 0.0;
+  dspHRTFModel   = "";
+
   //default hold time of 25 ms, this allows a 20 hertz sine to pass undistorted
   m_limiterHold = 0.025f;
   m_limiterRelease = 0.1f;
@@ -382,6 +389,15 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
 
     XMLUtils::GetFloat(pElement, "limiterhold", m_limiterHold, 0.0f, 100.0f);
     XMLUtils::GetFloat(pElement, "limiterrelease", m_limiterRelease, 0.001f, 100.0f);
+  }
+
+  pElement = pRootElement->FirstChildElement("dsp");
+  if (pElement)
+  {
+    XMLUtils::GetString(pElement, "dspHRTFModel",   dspHRTFModel);
+    XMLUtils::GetInt(pElement,    "dspHRTFCutFreq", dspHRTFCutFreq);
+    XMLUtils::GetDouble(pElement, "dspHRTFFeedLvl", dspHRTFFeedLvl);
+    XMLUtils::GetDouble(pElement, "dspHRTFGain",    dspHRTFGain);
   }
 
   pElement = pRootElement->FirstChildElement("karaoke");

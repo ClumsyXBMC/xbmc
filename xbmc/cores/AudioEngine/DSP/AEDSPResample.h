@@ -26,7 +26,7 @@
 /**
  * CAEDSPResample - A basic resampler that uses SSRC
  */
-class CAEDSPResample
+class CAEDSPResample : public IAEDSP
 {
 public:
   CAEDSPResample();

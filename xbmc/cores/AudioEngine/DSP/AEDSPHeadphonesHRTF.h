@@ -39,7 +39,7 @@
  * CAEDSPHeadphones - An implmentation of HRTF (Head-Related Transfer Function)
  *                    or crossfeed circuit for binaural headphone listening
  */
-class CAEDSPHeadphonesHRTF
+class CAEDSPHeadphonesHRTF : public IAEDSP
 {
 public:
   CAEDSPHeadphonesHRTF();

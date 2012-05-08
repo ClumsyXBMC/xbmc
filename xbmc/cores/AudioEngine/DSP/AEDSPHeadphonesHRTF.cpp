@@ -25,40 +25,41 @@
 
 #include "AEDSPHeadphonesHRTF.h"
 
+#include <string.h>
 #include "utils/MathUtils.h"
 #include "utils/log.h"
 #include "settings/AdvancedSettings.h"
 
 /* Minimum/maximum sample rate (Hz) */
-#define hrtf_MINSRATE 2000
-#define hrtf_MAXSRATE 384000
+#define HRTF_MINSRATE 2000
+#define HRTF_MAXSRATE 384000
 
 /* Minimum/maximum cut frequency (Hz) */
-#define hrtf_MINFCUT 300
-#define hrtf_MAXFCUT 2000
+#define HRTF_MINFCUT 300
+#define HRTF_MAXFCUT 2000
 
 /* Minimum/maximum feed level (dB * 10 @ low frequencies) */
-#define hrtf_MINFEED 10   /* 1 dB  */
-#define hrtf_MAXFEED 150  /* 15 dB */
+#define HRTF_MINFEED 10   /* 1 dB  */
+#define HRTF_MAXFEED 150  /* 15 dB */
 
 /* Minimum/maximum delays (uSec) */
-#define hrtf_MINDELAY  90  /*  90 uS */
-#define hrtf_MAXDELAY 620  /* 620 uS */
+#define HRTF_MINDELAY  90  /*  90 uS */
+#define HRTF_MAXDELAY 620  /* 620 uS */
 
 /* Minimum/maximum gains (scale) */
-#define hrtf_MINGAIN 0.7
-#define hrtf_MAXGAIN 1.2
+#define HRTF_MINGAIN 0.7
+#define HRTF_MAXGAIN 1.2
 
 /* Default sample rate (Hz) */
-#define hrtf_DEFAULT_SRATE   44100
+#define HRTF_DEFAULT_SRATE   44100
 
 /* Lowpass filter */
 #define lo_filter(in, out_1) \
-  (hrtfdp->a0_lo * in + hrtfdp->b1_lo * out_1)
+  (m_hrtfd.a0_lo * in + m_hrtfd.b1_lo * out_1)
 
 /* Highboost filter */
 #define hi_filter(in, in_1, out_1) \
-  (hrtfdp->a0_hi * in + hrtfdp->a1_hi * in_1 + hrtfdp->b1_hi * out_1)
+  (m_hrtfd.a0_hi * in + m_hrtfd.a1_hi * in_1 + m_hrtfd.b1_hi * out_1)
 
 /* Define value for PI */
 #ifndef M_PI
@@ -67,25 +68,24 @@
 
 struct hrtfModel
 {
-  std::string szModel;
-  uint32_t    uiCutFreq;
-  double      dFeedLvl;
+  const char*        name;
+  const unsigned int cutFreq;
+  const HRFT_TYPE    feedLvl;
 };
 
 static const hrtfModel hrtfModels[] =     { {"DEFAULT", 700,  3.5},
                                             {"CMOY",    700,  6.0},
                                             {"JMEIER",  650,  9.5},
                                             {"WIDE",   1200,  1.1},
-                                            {"NARROW",  600,  1.1} };
+                                            {"NARROW",  600,  1.1},
+                                            {NULL, 0, 0.0} };
 
 
-CAEDSPHeadphonesHRTF::CAEDSPHeadphonesHRTF()
+CAEDSPHeadphonesHRTF::CAEDSPHeadphonesHRTF() :
+  m_returnBuffer (NULL),
+  m_returnSamples(0   )
 {
-  hrtfdp = NULL;
-  if((hrtfdp = (t_hrtfdp)malloc(sizeof(t_hrtfd))) != NULL)
-  {
-    memset(hrtfdp, 0, sizeof(t_hrtfd));
-  }
+  memset(&m_hrtfd, 0, sizeof(m_hrtfd));
 }
 
 CAEDSPHeadphonesHRTF::~CAEDSPHeadphonesHRTF()
@@ -95,74 +95,70 @@ CAEDSPHeadphonesHRTF::~CAEDSPHeadphonesHRTF()
 
 void CAEDSPHeadphonesHRTF::DeInitialize()
 {
-  if (hrtfdp)
-  {
-    free(hrtfdp);
-    hrtfdp = NULL;
-  }
+  memset(&m_hrtfd, 0, sizeof(m_hrtfd));
 }
 
 bool CAEDSPHeadphonesHRTF::Initialize(const CAEChannelInfo& channels, const unsigned int sampleRate)
 {
-  if (channels.Count() != 2 || sampleRate < hrtf_MINSRATE || sampleRate > hrtf_MAXSRATE)
+  if (channels.Count() != 2 || !channels.ContainsChannels(AE_CH_LAYOUT_2_0))
     return false;
 
-  double Fc_lo; /* Lowpass filter cut frequency (Hz) */
-  double Fc_hi; /* Highboost filter cut frequency (Hz) */
-  double G_lo;  /* Lowpass filter gain (multiplier) */
-  double G_hi;  /* Highboost filter gain (multiplier) */
-  double GB_lo; /* Lowpass filter gain (dB) */
-  double GB_hi; /* Highboost filter gain (dB) (0 dB is high) */
-  double level; /* Feeding level (dB) (level = GB_lo - GB_hi) */
-  double x;
+  if (sampleRate < HRTF_MINSRATE || sampleRate > HRTF_MAXSRATE)
+       m_sampleRate = HRTF_DEFAULT_SRATE;
+  else m_sampleRate = sampleRate;
+  m_channels = channels;
+
+  HRFT_TYPE Fc_lo; /* Lowpass filter cut frequency (Hz) */
+  HRFT_TYPE Fc_hi; /* Highboost filter cut frequency (Hz) */
+  HRFT_TYPE G_lo;  /* Lowpass filter gain (multiplier) */
+  HRFT_TYPE G_hi;  /* Highboost filter gain (multiplier) */
+  HRFT_TYPE GB_lo; /* Lowpass filter gain (dB) */
+  HRFT_TYPE GB_hi; /* Highboost filter gain (dB) (0 dB is high) */
+  HRFT_TYPE level; /* Feeding level (dB) (level = GB_lo - GB_hi) */
+  HRFT_TYPE x;
 
   /* Get advancedsettings.xml parameters if set */
-  std::string dspHRTFModel     = g_advancedSettings.dspHRTFModel.ToUpper().c_str();
-  int         dspHRTFCutFreq   = g_advancedSettings.dspHRTFCutFreq;
-  double      dspHRTFFeedLvl   = g_advancedSettings.dspHRTFFeedLvl;
-  double      dspHRTFGain      = g_advancedSettings.dspHRTFGain;
+  std::string dspHRTFModel   = g_advancedSettings.dspHRTFModel.ToUpper();
+  int         dspHRTFCutFreq = g_advancedSettings.dspHRTFCutFreq;
+  HRFT_TYPE   dspHRTFFeedLvl = g_advancedSettings.dspHRTFFeedLvl;
+  HRFT_TYPE   dspHRTFGain    = g_advancedSettings.dspHRTFGain;
 
-  bool extSettings = false;
-  bool extModel    = false;
 
-  /* Determine if we use a standard model */
-  if (dspHRTFModel != "")
+  /* set the defaults */
+  Fc_lo = hrtfModels[0].cutFreq;
+  level = hrtfModels[0].feedLvl;
+
+  if (dspHRTFModel.empty())
   {
-    for (int j = 0; j < sizeof(hrtfModels)/sizeof(hrtfModel); j++)
-    {
-      if (dspHRTFModel == hrtfModels[j].szModel)
-      {
-        Fc_lo = hrtfModels[j].uiCutFreq;
-        level = hrtfModels[j].dFeedLvl;
-        extModel = true;
-        break;
-      }
-    }
-    if (!extModel)
-      CLog::Log(LOGERROR, __FUNCTION__": Invalid Model selected for Headphones DSP");
-  }
-  /* No standard model - check for settings */
-  else
-  {
-    if (dspHRTFCutFreq >= hrtf_MINFCUT  && dspHRTFCutFreq <= hrtf_MINFCUT  &&
-        dspHRTFFeedLvl >= hrtf_MINFEED  && dspHRTFFeedLvl <= hrtf_MAXFEED)
+    /* No standard model - check for settings */
+    if (dspHRTFCutFreq >= HRTF_MINFCUT  && dspHRTFCutFreq <= HRTF_MINFCUT  &&
+        dspHRTFFeedLvl >= HRTF_MINFEED  && dspHRTFFeedLvl <= HRTF_MAXFEED)
     {
       Fc_lo = dspHRTFCutFreq;
       level = dspHRTFFeedLvl;
-      extSettings = true;
     }
     else
-      CLog::Log(LOGERROR, __FUNCTION__": Invalid Settings selected for Headphones DSP");
+      CLog::Log(LOGERROR, "CAEDSPHeadphonesHRTF::Initialize - Invalid Settings selected for Headphones DSP");
   }
-
-  if (!extSettings && !extModel)
+  else
   {
-    Fc_lo = 700.0;
-    level = 4.5;
+    /* Determine if we use a standard model */
+    bool found = false;
+    for(const hrtfModel *model = &hrtfModels[0]; model->name != NULL; ++model)
+      if (dspHRTFModel == model->name)
+      {
+        Fc_lo = model->cutFreq;
+        level = model->feedLvl;
+        found = true;
+        break;
+      }
+
+    if (!found)
+      CLog::Log(LOGERROR, "CAEDSPHeadphonesHRTF::Initialize - Invalid Model selected for Headphones DSP");
   }
 
-  hrtfdp->srate = sampleRate;
-  hrtfdp->level = level;
+  m_hrtfd.srate = m_sampleRate;
+  m_hrtfd.level = level;
 
   GB_lo = level * -5.0 / 6.0 - 3.0;
   GB_hi = level / 6.0 - 3.0;
@@ -171,22 +167,22 @@ bool CAEDSPHeadphonesHRTF::Initialize(const CAEChannelInfo& channels, const unsi
   G_hi  = 1.0 - pow(10, GB_hi / 20.0);
   Fc_hi = Fc_lo * pow(2.0, (GB_lo - 20.0 * log10(G_hi )) / 12.0);
 
-  x = exp(-2.0 * M_PI * Fc_lo / (double)hrtfdp->srate);
-  hrtfdp->b1_lo = x;
-  hrtfdp->a0_lo = G_lo * (1.0 - x);
+  x = exp(-2.0 * M_PI * Fc_lo / (HRFT_TYPE)m_hrtfd.srate);
+  m_hrtfd.b1_lo = x;
+  m_hrtfd.a0_lo = G_lo * (1.0 - x);
 
-  x = exp(-2.0 * M_PI * Fc_hi / (double)hrtfdp->srate);
-  hrtfdp->b1_hi = x;
-  hrtfdp->a0_hi = 1.0 - G_hi * (1.0 - x);
-  hrtfdp->a1_hi = -x;
+  x = exp(-2.0 * M_PI * Fc_hi / (HRFT_TYPE)m_hrtfd.srate);
+  m_hrtfd.b1_hi = x;
+  m_hrtfd.a0_hi = 1.0 - G_hi * (1.0 - x);
+  m_hrtfd.a1_hi = -x;
 
-  if (dspHRTFGain < hrtf_MINGAIN || dspHRTFGain > hrtf_MAXGAIN)
+  if (dspHRTFGain < HRTF_MINGAIN || dspHRTFGain > HRTF_MAXGAIN)
   {
-    hrtfdp->gain = 1.0 / ((1.0 - G_hi + G_lo) * 0.9);
+    m_hrtfd.gain = 1.0 / ((1.0 - G_hi + G_lo) * 0.9);
   }
   else
   {
-    hrtfdp->gain = dspHRTFGain;
+    m_hrtfd.gain = dspHRTFGain;
   }
 
   return true;
@@ -194,62 +190,67 @@ bool CAEDSPHeadphonesHRTF::Initialize(const CAEChannelInfo& channels, const unsi
 
 void CAEDSPHeadphonesHRTF::GetOutputFormat(CAEChannelInfo& channels, unsigned int& sampleRate)
 {
-  if((sampleRate > hrtf_MAXSRATE) || (sampleRate < hrtf_MINSRATE || sampleRate == NULL))
-  {
-    hrtfdp->srate = hrtf_DEFAULT_SRATE;
-    sampleRate    = hrtf_DEFAULT_SRATE;
-  }
-  else
-  {
-    hrtfdp->srate = sampleRate;
-  }
-
-  channels = AE_CH_LAYOUT_2_0;
-
+  sampleRate = m_sampleRate;
+  channels   = m_channels;
   return;
 }
 
 unsigned int CAEDSPHeadphonesHRTF::Process(float *data, unsigned int samples)
 {
-  double       sample_d      [2];
-  float*       pSampleBuf  = data;
-  unsigned int count       = samples/2;
-  
-  pReturnBuffer            = pSampleBuf;
-  iReturnSamples           = samples;
+  m_returnBuffer  = data;
+  m_returnSamples = samples;
 
-  if (count > 0)
+  for(unsigned int i = 0; i < samples; i += 2, data += 2)
   {
-    while(count--)
-    {
-      sample_d[0] = (double)pSampleBuf[0];
-      sample_d[1] = (double)pSampleBuf[1];
+#ifdef HRTF_DOUBLE
+    HRFT_TYPE sample_d[2];
 
-      /* Lowpass filter */
-      hrtfdp->lfs.lo[0] = lo_filter(sample_d[0], hrtfdp->lfs.lo[0]);
-      hrtfdp->lfs.lo[1] = lo_filter(sample_d[1], hrtfdp->lfs.lo[1]);
+    sample_d[0] = (HRFT_TYPE)data[0];
+    sample_d[1] = (HRFT_TYPE)data[1];
 
-      /* Highboost filter */
-      hrtfdp->lfs.hi[0] =
-        hi_filter(sample_d[0], hrtfdp->lfs.asis[0], hrtfdp->lfs.hi[0]);
-      hrtfdp->lfs.hi[1] =
-        hi_filter(sample_d[1], hrtfdp->lfs.asis[1], hrtfdp->lfs.hi[1]);
-      hrtfdp->lfs.asis[0] = sample_d[0];
-      hrtfdp->lfs.asis[1] = sample_d[1];
+    /* Lowpass filter */
+    m_hrtfd.lfs.lo[0] = lo_filter(sample_d[0], m_hrtfd.lfs.lo[0]);
+    m_hrtfd.lfs.lo[1] = lo_filter(sample_d[1], m_hrtfd.lfs.lo[1]);
 
-      /* Crossfeed */
-      sample_d[0] = hrtfdp->lfs.hi[0] + hrtfdp->lfs.lo[1];
-      sample_d[1] = hrtfdp->lfs.hi[1] + hrtfdp->lfs.lo[0];
+    /* Highboost filter */
+    m_hrtfd.lfs.hi[0] =
+      hi_filter(sample_d[0], m_hrtfd.lfs.asis[0], m_hrtfd.lfs.hi[0]);
+    m_hrtfd.lfs.hi[1] =
+      hi_filter(sample_d[1], m_hrtfd.lfs.asis[1], m_hrtfd.lfs.hi[1]);
+    m_hrtfd.lfs.asis[0] = sample_d[0];
+    m_hrtfd.lfs.asis[1] = sample_d[1];
 
-      /* Bass boost requires allpass attenuation */
-      sample_d[0] *= hrtfdp->gain;
-      sample_d[1] *= hrtfdp->gain;
+    /* Crossfeed */
+    sample_d[0] = m_hrtfd.lfs.hi[0] + m_hrtfd.lfs.lo[1];
+    sample_d[1] = m_hrtfd.lfs.hi[1] + m_hrtfd.lfs.lo[0];
 
-      pSampleBuf[0] = (float)sample_d[0];
-      pSampleBuf[1] = (float)sample_d[1];
+    /* Bass boost requires allpass attenuation */
+    sample_d[0] *= m_hrtfd.gain;
+    sample_d[1] *= m_hrtfd.gain;
 
-      pSampleBuf += 2;
-    }
+    data[0] = (float)sample_d[0];
+    data[1] = (float)sample_d[1];
+#else
+    /* Lowpass filter */
+    m_hrtfd.lfs.lo[0] = lo_filter(data[0], m_hrtfd.lfs.lo[0]);
+    m_hrtfd.lfs.lo[1] = lo_filter(data[1], m_hrtfd.lfs.lo[1]);
+
+    /* Highboost filter */
+    m_hrtfd.lfs.hi[0] =
+      hi_filter(data[0], m_hrtfd.lfs.asis[0], m_hrtfd.lfs.hi[0]);
+    m_hrtfd.lfs.hi[1] =
+      hi_filter(data[1], m_hrtfd.lfs.asis[1], m_hrtfd.lfs.hi[1]);
+    m_hrtfd.lfs.asis[0] = data[0];
+    m_hrtfd.lfs.asis[1] = data[1];
+
+    /* Crossfeed */
+    data[0] = m_hrtfd.lfs.hi[0] + m_hrtfd.lfs.lo[1];
+    data[1] = m_hrtfd.lfs.hi[1] + m_hrtfd.lfs.lo[0];
+
+    /* Bass boost requires allpass attenuation */
+    data[0] *= m_hrtfd.gain;
+    data[1] *= m_hrtfd.gain;
+#endif
   }
 
   return samples;
@@ -257,12 +258,17 @@ unsigned int CAEDSPHeadphonesHRTF::Process(float *data, unsigned int samples)
 
 float *CAEDSPHeadphonesHRTF::GetOutput(unsigned int& samples)
 {
-  samples = iReturnSamples;
-
-  return pReturnBuffer;
+  samples = m_returnSamples;
+  return m_returnBuffer;
 }
 
 double CAEDSPHeadphonesHRTF::GetDelay()
 {
   return 0.0;
 }
+
+virtual void OnSettingChange(std::string setting)
+{
+  /* TODO: re-init based on GUI setting */
+}
+

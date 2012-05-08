@@ -252,7 +252,7 @@ bool CAEChannelInfo::HasChannel(const enum AEChannel ch) const
   return false;
 }
 
-bool CAEChannelInfo::ContainsChannels(CAEChannelInfo& rhs) const
+bool CAEChannelInfo::ContainsChannels(const CAEChannelInfo& rhs) const
 {
   for (unsigned int i = 0; i < rhs.m_channelCount; ++i)
   {
@@ -260,4 +260,10 @@ bool CAEChannelInfo::ContainsChannels(CAEChannelInfo& rhs) const
       return false;
   }
   return true;
+}
+
+bool CAEChannelInfo::ContainsChannels(const enum AEStdChLayout rhs) const
+{
+  const CAEChannelInfo channels = rhs;
+  return ContainsChannels(channels);
 }

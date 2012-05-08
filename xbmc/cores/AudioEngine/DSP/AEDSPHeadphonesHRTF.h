@@ -27,6 +27,14 @@
 #include "Interfaces/AEDSP.h"
 //#include <samplerate.h>
 
+/* dont use double precision on embedded devices */
+#if defined(__arm__) || defined(TARGET_DARWIN_IOS)
+  #define HRFT_TYPE float
+#else
+  #define HRTF_DOUBLE
+  #define HRFT_TYPE double
+#endif
+
 /**
  * CAEDSPHeadphones - An implmentation of HRTF (Head-Related Transfer Function)
  *                    or crossfeed circuit for binaural headphone listening
@@ -52,24 +60,26 @@ public:
 
   virtual double GetDelay();
 
+  virtual void OnSettingChange(std::string setting);
+
 private:
+  unsigned int   m_sampleRate;
+  CAEChannelInfo m_channels;
 
-  typedef struct
+  struct hrtfd
   {
-    double level;                  /* Crossfeed level */
-    uint32_t srate;                /* Sample rate (Hz) */
-    double a0_lo, b1_lo;           /* Lowpass IIR filter coefficients */
-    double a0_hi, a1_hi, b1_hi;    /* Highboost IIR filter coefficients */
-    double gain;                   /* Global gain against overloading */
+    HRFT_TYPE level;                  /* Crossfeed level */
+    unsigned int srate;                /* Sample rate (Hz) */
+    HRFT_TYPE a0_lo, b1_lo;           /* Lowpass IIR filter coefficients */
+    HRFT_TYPE a0_hi, a1_hi, b1_hi;    /* Highboost IIR filter coefficients */
+    HRFT_TYPE gain;                   /* Global gain against overloading */
     /* Buffer of last filtered sample: [0] 1st channel, [1] 2nd channel */
-    struct {double asis[ 2 ], lo[ 2 ], hi[ 2 ]; } lfs;
-  } t_hrtfd;
+    struct {HRFT_TYPE asis[ 2 ], lo[ 2 ], hi[ 2 ]; } lfs;
+  };
 
-  typedef t_hrtfd* t_hrtfdp;
-  t_hrtfdp         hrtfdp;
-
-  float*           pReturnBuffer;  /* Store float buffer data for GetOutput() */
-  unsigned int     iReturnSamples; /* Store number of samples for GetOutput() */
+  struct hrtfd     m_hrtfd;
+  float*           m_returnBuffer;  /* Store float buffer data for GetOutput() */
+  unsigned int     m_returnSamples; /* Store number of samples for GetOutput() */
 
   //void         DSPCrossFeed(float *sample, int n, int m_SampleRate);
   //void         DSPCrossFeedInit(int sampleRate);

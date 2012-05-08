@@ -267,7 +267,7 @@ double CAEDSPHeadphonesHRTF::GetDelay()
   return 0.0;
 }
 
-virtual void OnSettingChange(std::string setting)
+void CAEDSPHeadphonesHRTF::OnSettingChange(std::string setting)
 {
   /* TODO: re-init based on GUI setting */
 }

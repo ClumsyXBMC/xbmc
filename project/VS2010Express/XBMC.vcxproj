@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug (DirectX)|Win32">
@@ -916,10 +916,12 @@
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AE.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AEDSP.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AEEncoder.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AEPostProc.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AESink.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AESound.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\AEStream.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Interfaces\ThreadedAE.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\PostProc\AEPPAnimationFade.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Sinks\AESinkDirectSound.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Sinks\AESinkNULL.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\Sinks\AESinkProfiler.h" />

@@ -39,8 +39,11 @@
 #include "AESinkFactory.h"
 #include "Interfaces/AESink.h"
 #include "Utils/AEUtil.h"
+
 #include "Encoders/AEEncoderFFmpeg.h"
 #include "DSP/AEDSPHeadphonesHRTF.h"
+#include "DSP/AEDSPDRCompressor.h"
+#include "DSP/AEDSPLowPassFilter.h"
 
 using namespace std;
 
@@ -342,7 +345,7 @@ void CSoftAE::InternalOpenSink()
     {
       /* install the HeadphonesHRTF DSP */
       IAEDSP *dsp;
-      dsp = new CAEDSPHeadphonesHRTF();
+      dsp = new CAEDSPDRCompressor();
       if (dsp->Initialize(m_sinkFormat.m_channelLayout, m_sinkFormat.m_sampleRate))
         m_dspList.push_back(dsp);
       else

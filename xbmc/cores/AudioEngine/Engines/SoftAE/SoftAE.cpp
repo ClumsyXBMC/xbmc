@@ -212,7 +212,7 @@ void CSoftAE::InternalOpenSink()
         newFormat.m_channelLayout.ResolveChannels(m_stdChLayout);
       else
       {
-        if (m_masterStream->GetChannelLayout() == AE_CH_LAYOUT_2_0)
+        if (m_masterStream->GetChannelCount() == 2)
           m_transcode = false;
       }
     }

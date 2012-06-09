@@ -83,9 +83,9 @@ bool CAEDSPDRCompressor::Initialize(const CAEChannelInfo& channels, const unsign
   return true;
 }
 
-void CAEDSPDRCompressor::OnSettingChange(std::string setting /*unsigned int index, float value */)
+void CAEDSPDRCompressor::OnSettingChange(std::string setting)
 {
-  Initialize();
+  Initialize(m_channels, m_sampleRate);
 }
 
 void CAEDSPDRCompressor::SetParameterDefaults()

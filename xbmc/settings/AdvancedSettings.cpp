@@ -63,6 +63,17 @@ void CAdvancedSettings::Initialize()
   dspHRTFFeedLvl = 0.0;
   dspHRTFGain    = 0.0;
   dspHRTFModel   = "";
+  /* DSP: DRCompressor   */
+  dspDRCThreshold    = -6.0f;
+  dspDRCGain         =  0.0f;
+  dspDRCKneeWidth    =  2.0f;
+  dspDRCRatio        =  4.0f;
+  dspDRCAttackTime   =  0.010f;
+  dspDRCReleaseTime  =  0.080f;
+  dspDRCAutoGain     =  true;
+  dspDRCAutoAttack   =  true;
+  dspDRCAutoRelease  =  true;
+  dspDRCAutoKnee     =  true;
 
   //default hold time of 25 ms, this allows a 20 hertz sine to pass undistorted
   m_limiterHold = 0.025f;
@@ -400,10 +411,22 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
   pElement = pRootElement->FirstChildElement("dsp");
   if (pElement)
   {
+    /* DSP: HeadphonesHRTF */ 
     XMLUtils::GetString(pElement, "dspHRTFModel",   dspHRTFModel);
     XMLUtils::GetInt(pElement,    "dspHRTFCutFreq", dspHRTFCutFreq);
     XMLUtils::GetDouble(pElement, "dspHRTFFeedLvl", dspHRTFFeedLvl);
     XMLUtils::GetDouble(pElement, "dspHRTFGain",    dspHRTFGain);
+    /* DSP: DRCompressor */
+    XMLUtils::GetFloat(pElement, "dspDRCThreshold",   dspDRCThreshold, -60.0f,    0.0f);
+    XMLUtils::GetFloat(pElement, "dspDRCGain",        dspDRCGain,        0.0f,   12.0f);
+    XMLUtils::GetFloat(pElement, "dspDRCAttackTime",  dspDRCAttackTime,  0.005f,  0.200f);
+    XMLUtils::GetFloat(pElement, "dspDRCReleaseTime", dspDRCReleaseTime, 0.010f,  2.000f);
+    XMLUtils::GetFloat(pElement, "dspDRCKneeWidth",   dspDRCKneeWidth,   1.0f,    5.0f);
+    XMLUtils::GetFloat(pElement, "dspDRCRatio",       dspDRCRatio,       1.0f,  100.0f);
+    XMLUtils::GetBoolean(pElement, "dspDRCGain",        dspDRCAutoGain);
+    XMLUtils::GetBoolean(pElement, "dspDRCAutoAttack",  dspDRCAutoAttack);
+    XMLUtils::GetBoolean(pElement, "dspDRCAutoRelease", dspDRCAutoRelease);
+    XMLUtils::GetBoolean(pElement, "dspDRCAutoKnee",    dspDRCAutoKnee);
   }
 
   pElement = pRootElement->FirstChildElement("karaoke");

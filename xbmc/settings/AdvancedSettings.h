@@ -114,6 +114,17 @@ class CAdvancedSettings
     int         dspHRTFCutFreq;
     double      dspHRTFFeedLvl;
     double      dspHRTFGain;
+    /* DSP: DRCompressor   */
+    float       dspDRCThreshold;
+    float       dspDRCGain;
+    float       dspDRCAttackTime;
+    float       dspDRCReleaseTime;
+    float       dspDRCKneeWidth;
+    float       dspDRCRatio;
+    bool        dspDRCAutoGain;
+    bool        dspDRCAutoAttack;
+    bool        dspDRCAutoRelease;
+    bool        dspDRCAutoKnee;
 
     float m_videoSubsDelayRange;
     float m_videoAudioDelayRange;

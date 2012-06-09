@@ -299,6 +299,7 @@
     <ClCompile Include="..\..\xbmc\BackgroundInfoLoader.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AEFactory.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.cpp" />
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPDRCompressor.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPLowPassFilter.cpp" />
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.cpp" />
@@ -904,6 +905,7 @@
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AEAudioFormat.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AEFactory.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\AESinkFactory.h" />
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPDRCompressor.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPHeadphonesHRTF.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPLowPassFilter.h" />
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPResample.h" />

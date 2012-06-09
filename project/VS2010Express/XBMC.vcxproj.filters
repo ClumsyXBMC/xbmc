@@ -2565,6 +2565,9 @@
     <ClCompile Include="..\..\xbmc\cores\AudioEngine\PostProc\AEPPAnimationFade.cpp">
       <Filter>cores\AudioEngine\PostProc</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPDRCompressor.cpp">
+      <Filter>cores\AudioEngine\DSP</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\xbmc\win32\pch.h">
@@ -5165,6 +5168,9 @@
     </ClInclude>
     <ClInclude Include="..\..\xbmc\cores\AudioEngine\PostProc\AEPPAnimationFade.h">
       <Filter>cores\AudioEngine\PostProc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xbmc\cores\AudioEngine\DSP\AEDSPDRCompressor.h">
+      <Filter>cores\AudioEngine\DSP</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
